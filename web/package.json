@@ -1,0 +1,20 @@
+{
+  "name": "go-lit-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  },
+  "devDependencies": {
+    "@scalar/api-reference": "^1.43.10",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "@lit-labs/signals": "^0.2.0",
+    "@lit/context": "^1.1.6",
+    "lit": "^3.3.2"
+  }
+}

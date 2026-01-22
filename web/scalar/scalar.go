@@ -1,0 +1,35 @@
+// Package scalar provides the interactive API documentation handler using Scalar UI.
+// Assets are embedded at compile time for zero-dependency deployment.
+package scalar
+
+import (
+	"embed"
+	"html/template"
+	"net/http"
+
+	"github.com/JaimeStill/go-lit/pkg/module"
+)
+
+//go:embed index.html scalar.css scalar.js
+var staticFS embed.FS
+
+// NewModule creates the Scalar documentation module at the given base path.
+func NewModule(basePath string) *module.Module {
+	router := buildRouter(basePath)
+	return module.New(basePath, router)
+}
+
+func buildRouter(basePath string) http.Handler {
+	mux := http.NewServeMux()
+
+	tmpl := template.Must(template.ParseFS(staticFS, "index.html"))
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		tmpl.Execute(w, map[string]string{"BasePath": basePath})
+	})
+
+	mux.Handle("GET /", http.FileServer(http.FS(staticFS)))
+
+	return mux
+}
+

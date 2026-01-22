@@ -15,20 +15,32 @@ The architecture enforces a hard boundary between server and client concerns, en
 
 ### Server (Go)
 
-- Single HTML shell template serves all `/app/*` routes
+- Single HTML shell template serves all `/app/*` routes (Go has no view awareness)
 - JSON API endpoints at `/api/*`
 - OpenAPI documentation at `/scalar`
 - Assets embedded via `//go:embed` for zero-dependency deployment
 
 ### Client (Lit + TypeScript)
 
-- **Custom router**: Static route-to-component mapping with param extraction
-- **Three-tier components**:
-  - **Views**: Router targets, initialize and provide services via `@lit/context`
-  - **Stateful**: Consume services, handle events, coordinate state
-  - **Stateless**: Pure components, attributes in, events out
-- **Signals**: `@lit-labs/signals` for reactive state management
-- **Services**: Interface-based contracts, factory functions return implementations
+The client architecture follows a structured component hierarchy with clear responsibility boundaries:
+
+**Router**: Static route-to-component mapping. The router reads `location.pathname`, matches against a routes map, extracts params from `:param` segments, and mounts components to the content container. It intercepts link clicks for `pushState` navigation and listens on `popstate` for browser back/forward.
+
+**Component Hierarchy**:
+
+| Type | Service Awareness | Responsibility |
+|------|-------------------|----------------|
+| **View** | Initializes and provides via `@provide()` | Router targets, own service lifecycle |
+| **Stateful** | Consumes via `@consume()` | Handle events, coordinate state |
+| **Stateless** | None | Pure: attributes in, events out |
+
+**Services**: Interface-based contracts consumed via `@lit/context`. View components provide concrete implementations; stateful components consume the interface type with no visibility into backing implementation.
+
+**Signals**: `@lit-labs/signals` for reactive state. Service-level signals are shared across consumers; component-level signals are scoped to instance trees.
+
+**Event Flow**: Stateless components emit events → Stateful components catch and handle by invoking service methods → Events do not propagate beyond the stateful boundary.
+
+**Directory Structure**: Organized by domain. Each domain contains `views/`, `components/`, `elements/`, along with `interfaces.ts`, `types.ts`, and `context.ts`.
 
 ## Quick Start
 
@@ -37,7 +49,7 @@ The architecture enforces a hard boundary between server and client concerns, en
 cd web && bun install && bun run build
 
 # Run server
-go run ./cmd/server
+cd .. && go run ./cmd/server
 
 # Access
 # App: http://localhost:8080/app/
@@ -46,7 +58,13 @@ go run ./cmd/server
 
 ## Project Status
 
-This is a proof-of-concept. See [PROJECT.md](PROJECT.md) for implementation roadmap and session planning.
+This is a proof-of-concept.
+
+**Session 1 (Complete)**: Go server infrastructure, API endpoints (chat/vision streaming), Scalar documentation, web build tooling, and minimal shell template.
+
+**Session 2 (Pending)**: Client-side router, shared infrastructure, config domain (localStorage), execution domain (SSE streaming), and Lit view components.
+
+See [PROJECT.md](PROJECT.md) for detailed implementation roadmap.
 
 ## Related Projects
 
