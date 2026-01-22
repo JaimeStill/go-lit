@@ -2,7 +2,7 @@
 
 ## Vision
 
-Validate the Go + Lit web application architecture before retrofitting [agent-lab](https://github.com/JaimeStill/agent-lab). This POC focuses on the agents domain with Chat + ChatStream capabilities as a minimal validation scope.
+Validate the Go + Lit web application architecture defined in [go-lit-architecture.md](https://github.com/JaimeStill/agent-lab/blob/main/_context/concepts/go-lit-architecture.md) before retrofitting [agent-lab](https://github.com/JaimeStill/agent-lab). This POC focuses on chat/vision execution with client-side config management as a minimal validation scope.
 
 ## Architecture Principles
 
@@ -15,21 +15,25 @@ Validate the Go + Lit web application architecture before retrofitting [agent-la
 
 ## Session Roadmap
 
-### Session 1: Foundation
+### Session 1: Foundation ✓
 
-- [ ] Go server extraction (pkg/, internal/agents, internal/config, cmd/server)
-- [ ] Web infrastructure (scalar module, vite.client.ts, vite.config.ts)
-- [ ] Client foundation (package.json, tsconfig.json, design/, router)
+- [x] Go server extraction (pkg/, internal/agents, internal/config, cmd/server)
+- [x] Modules pattern (cmd/server/modules.go)
+- [x] Web infrastructure (scalar module, vite configs, tsconfig)
+- [x] Layout + view template pattern (app.html + home.html)
+- [x] Design system CSS layers
+- [x] Minimal app.ts entry point (CSS import only)
+
+### Session 2: Client Application
+
+- [ ] Router implementation (static mapping, param extraction, history API)
 - [ ] Shared infrastructure (api.ts, types.ts)
-- [ ] Basic shell template
+- [ ] Config domain (localStorage-based config management)
+- [ ] Execution domain (chat/vision streaming via SSE)
+- [ ] View components (home, config-list, config-edit, execute)
+- [ ] Update app.go to catch-all route for client routing
 
-### Session 2: Components + UI
-
-- [ ] Service architecture (interfaces, context, implementations)
-- [ ] View components (agents-list, agent-detail, agent-execute)
-- [ ] Stateful components (agent-list, agent-form, execution-panel)
-- [ ] Stateless elements (al-button, al-input, al-card)
-- [ ] Chat/ChatStream execution with SSE
+---
 
 ## Project Structure
 
@@ -37,56 +41,50 @@ Validate the Go + Lit web application architecture before retrofitting [agent-la
 go-lit/
 ├── cmd/server/
 │   ├── main.go              # Entry point
-│   ├── server.go            # Lifecycle coordination
+│   ├── server.go            # Server struct, lifecycle
+│   ├── modules.go           # Modules struct, NewModules, Mount
 │   └── http.go              # HTTP server wrapper
 ├── internal/
-│   ├── config/config.go     # Simplified TOML config (no database)
+│   ├── config/              # Server configuration (TOML)
 │   ├── agents/
-│   │   ├── agent.go         # Types (from agent-lab)
-│   │   ├── errors.go        # Domain errors (from agent-lab)
-│   │   ├── handler.go       # HTTP handlers (from agent-lab)
-│   │   ├── requests.go      # Request types (from agent-lab)
-│   │   ├── openapi.go       # OpenAPI spec (from agent-lab)
-│   │   ├── store.go         # In-memory storage with seed
-│   │   └── system.go        # System interface + implementation
+│   │   ├── errors.go        # Domain errors
+│   │   ├── handler.go       # ChatStream, VisionStream handlers
+│   │   ├── requests.go      # ChatStreamRequest, VisionForm
+│   │   └── openapi.go       # OpenAPI spec definitions
 │   └── api/api.go           # API module assembly
-├── pkg/
+├── pkg/                     # Shared infrastructure (from agent-lab)
 │   ├── handlers/            # JSON response utilities
+│   ├── lifecycle/           # Shutdown coordination
 │   ├── middleware/          # CORS, logging
 │   ├── module/              # HTTP module routing
 │   ├── openapi/             # OpenAPI spec builder
-│   ├── pagination/          # PageRequest/PageResult
-│   ├── routes/              # Route definitions
-│   └── web/                 # Template infrastructure
-│       └── views.go         # ViewDef, ViewData, TemplateSet
+│   └── web/                 # Template infrastructure (views.go)
 ├── web/
-│   ├── vite.client.ts       # Multi-client vite config merger
+│   ├── package.json         # Bun dependencies
+│   ├── tsconfig.json        # TypeScript config
 │   ├── vite.config.ts       # Merges app + scalar configs
+│   ├── vite.client.ts       # Multi-client vite config merger
 │   ├── app/
-│   │   ├── app.go           # App module (shell + assets)
-│   │   ├── client.config.ts # App client vite config
+│   │   ├── app.go           # App module (embeds assets)
+│   │   ├── client.config.ts # App vite config
 │   │   ├── client/
 │   │   │   ├── app.ts       # Entry point
-│   │   │   ├── design/      # CSS architecture
-│   │   │   ├── router/      # Custom router
-│   │   │   ├── shared/      # Cross-domain infrastructure
-│   │   │   └── agents/      # Agents domain
+│   │   │   └── design/      # CSS layers (styles, reset, theme, layout, components)
 │   │   ├── dist/            # Built assets (gitignored)
 │   │   ├── public/          # Favicons, manifest
 │   │   └── server/
-│   │       └── layouts/
-│   │           └── app.html # Shell template
-│   └── scalar/
-│       ├── scalar.go        # Scalar module (OpenAPI docs)
-│       ├── client.config.ts # Scalar client vite config
-│       ├── app.ts           # Scalar entry point
-│       └── index.html       # Scalar template
-├── config.toml              # Server config
-├── agents.json              # Seed data
+│   │       ├── layouts/
+│   │       │   └── app.html # Shell template with content block
+│   │       └── views/
+│   │           └── home.html # Placeholder (Session 1)
+│   └── scalar/              # OpenAPI documentation module
+├── config.toml              # Server configuration
 └── go.mod
 ```
 
-## Implementation Details
+---
+
+## Session 1 Implementation (Complete)
 
 ### Go Server
 
@@ -99,132 +97,466 @@ go-lit/
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ .Title }} - Go Lit</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="stylesheet" href="dist/{{ .Bundle }}.css">
 </head>
 <body>
-  <nav class="app-nav">
-    <a href="." class="brand">Go Lit</a>
-    <a href="agents">Agents</a>
-  </nav>
-  <main id="app-content"></main>
+  <main id="app-content">
+    {{ block "content" . }}{{ end }}
+  </main>
   <script type="module" src="dist/{{ .Bundle }}.js"></script>
 </body>
 </html>
 ```
 
+**View Template** (`web/app/server/views/home.html`):
+```html
+{{ define "content" }}
+<h1>Go-Lit</h1>
+<p>Shell rendered successfully. Client infrastructure coming in Session 2.</p>
+{{ end }}
+```
+
 **App Module** (`web/app/app.go`):
 ```go
 var views = []web.ViewDef{
-    // Single view - shell serves all routes, client router handles the rest
-    {Route: "/{path...}", Template: "app.html", Title: "App", Bundle: "app"},
+    {Route: "/{$}", Template: "home.html", Title: "Home", Bundle: "app"},
 }
 
 func NewModule(basePath string) (*module.Module, error) {
     ts, err := web.NewTemplateSet(layoutFS, viewFS, "server/layouts/*.html", "server/views", basePath, views)
-    // ... build router with ts.PageHandler("app.html", views[0]) for catch-all
+    // ...
+    router := buildRouter(ts)
+    return module.New(basePath, router), nil
 }
 ```
 
-### Client Infrastructure
+### API Endpoints
 
-**Dependencies:**
+| Method | Path | Content-Type | Description |
+|--------|------|--------------|-------------|
+| POST | `/api/chat` | `application/json` | Stream chat response via SSE |
+| POST | `/api/vision` | `multipart/form-data` | Stream vision response via SSE |
+| GET | `/api/openapi.json` | `application/json` | OpenAPI specification |
+
+**ChatStreamRequest** (`POST /api/chat`):
+```json
+{
+  "config": {
+    "name": "agent-name",
+    "system_prompt": "You are...",
+    "client": { "timeout": "24s", ... },
+    "provider": { "name": "ollama", "base_url": "http://localhost:11434" },
+    "model": { "name": "llama3.2:3b", "capabilities": { "chat": { ... } } }
+  },
+  "prompt": "User message here"
+}
+```
+
+**VisionForm** (`POST /api/vision`):
+```
+config: JSON-encoded AgentConfig
+prompt: Vision prompt text
+images[]: Image files (multipart)
+```
+
+**SSE Response Format**:
+```
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","model":"llama3.2:3b","choices":[{"index":0,"delta":{"role":"assistant","content":"token"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-123",...,"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+data: [DONE]
+```
+
+### Dependencies
+
 ```json
 {
   "dependencies": {
-    "lit": "^3.0.0",
-    "@lit/context": "^1.0.0",
-    "@lit-labs/signals": "^1.0.0"
+    "lit": "^3.3.2",
+    "@lit/context": "^1.1.6",
+    "@lit-labs/signals": "^0.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "vite": "^5.0.0"
+    "@scalar/api-reference": "^1.43.10",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
   }
 }
 ```
 
-**Routes Map** (`web/app/client/router/routes.ts`):
+---
+
+## Session 2 Implementation Plan
+
+### Phase 1: Router
+
+**File:** `web/app/client/router/types.ts`
 ```typescript
+export interface RouteConfig {
+  component: string;
+  title: string;
+}
+
+export interface RouteMatch {
+  component: string;
+  title: string;
+  params: Record<string, string>;
+}
+```
+
+**File:** `web/app/client/router/routes.ts`
+```typescript
+import type { RouteConfig } from './types';
+
 export const routes: Record<string, RouteConfig> = {
-  '': { component: 'al-home-view', title: 'Home' },
-  'agents': { component: 'al-agents-list-view', title: 'Agents' },
-  'agents/:id': { component: 'al-agent-detail-view', title: 'Agent' },
-  'agents/:id/execute': { component: 'al-agent-execute-view', title: 'Execute' },
+  '': { component: 'gl-home-view', title: 'Home' },
+  'config': { component: 'gl-config-list-view', title: 'Configurations' },
+  'config/new': { component: 'gl-config-edit-view', title: 'New Configuration' },
+  'config/:id': { component: 'gl-config-edit-view', title: 'Edit Configuration' },
+  'execute': { component: 'gl-execute-view', title: 'Execute' },
+  'execute/:id': { component: 'gl-execute-view', title: 'Execute' },
 };
 ```
 
-**API Client** (`web/app/client/shared/types.ts`):
+**File:** `web/app/client/router/router.ts`
+
+Router responsibilities:
+1. Read `location.pathname`, extract view segment relative to `/app/`
+2. Match against static routes map, extract params from `:param` segments
+3. Create component element, set param attributes
+4. Mount to `#app-content` container
+5. Intercept internal link clicks (`<a href>`) for `pushState`
+6. Listen on `popstate` for browser back/forward
+7. Update `document.title`
+
+### Phase 2: Shared Infrastructure
+
+**File:** `web/app/client/shared/types.ts`
 ```typescript
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
+
+export interface StreamingChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    delta: { role?: string; content?: string };
+    finish_reason: string | null;
+  }>;
+}
 ```
 
-### Component Patterns
-
-**View Component** - Initialize and provide services:
+**File:** `web/app/client/shared/api.ts`
 ```typescript
-@customElement('al-agents-list-view')
-export class AgentsListView extends SignalWatcher(LitElement) {
-  @provide({ context: agentServiceContext })
-  private agentService: AgentService = createAgentService();
+import type { Result } from './types';
+
+const BASE = '/api';
+
+export const api = {
+  async post<T>(path: string, body: unknown): Promise<Result<T>> {
+    try {
+      const res = await fetch(`${BASE}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        return { ok: false, error: err.error || res.statusText };
+      }
+      return { ok: true, data: await res.json() };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  },
+
+  chatStream(config: AgentConfig, prompt: string): ReadableStream<StreamingChunk> {
+    // Return a ReadableStream that consumes SSE from /api/chat
+  },
+
+  visionStream(config: AgentConfig, prompt: string, images: File[]): ReadableStream<StreamingChunk> {
+    // Return a ReadableStream that consumes SSE from /api/vision (multipart)
+  },
+};
+```
+
+### Phase 3: Config Domain
+
+Agent configurations are stored client-side in localStorage. No server-side persistence.
+
+**Directory:** `web/app/client/config/`
+
+```
+config/
+├── types.ts           # AgentConfig type (mirrors go-agents)
+├── interfaces.ts      # ConfigService interface
+├── context.ts         # configServiceContext
+├── services/
+│   └── config-service.ts  # localStorage implementation
+├── views/
+│   ├── config-list-view.ts
+│   └── config-edit-view.ts
+├── components/
+│   ├── config-list.ts
+│   └── config-form.ts
+└── elements/
+    └── config-card.ts
+```
+
+**File:** `web/app/client/config/types.ts`
+```typescript
+export interface AgentConfig {
+  id: string;           // UUID for localStorage key
+  name: string;
+  system_prompt: string;
+  client: ClientConfig;
+  provider: ProviderConfig;
+  model: ModelConfig;
+}
+
+export interface ClientConfig {
+  timeout: string;
+  retry?: RetryConfig;
+  connection_pool_size?: number;
+  connection_timeout?: string;
+}
+
+export interface ProviderConfig {
+  name: string;
+  base_url: string;
+  api_key?: string;
+}
+
+export interface ModelConfig {
+  name: string;
+  capabilities: {
+    chat?: ChatCapabilities;
+    vision?: VisionCapabilities;
+  };
+}
+// ... additional types
+```
+
+**File:** `web/app/client/config/interfaces.ts`
+```typescript
+import type { Signal } from '@lit-labs/signals';
+import type { AgentConfig } from './types';
+
+export interface ConfigService {
+  configs: Signal<AgentConfig[]>;
+  loading: Signal<boolean>;
+
+  list(): void;
+  find(id: string): AgentConfig | undefined;
+  save(config: AgentConfig): void;
+  delete(id: string): void;
+}
+```
+
+### Phase 4: Execution Domain
+
+Handles chat and vision execution with SSE streaming.
+
+**Directory:** `web/app/client/execution/`
+
+```
+execution/
+├── types.ts           # ChatStreamRequest, execution state
+├── interfaces.ts      # ExecutionService interface
+├── context.ts         # executionServiceContext
+├── services/
+│   └── execution-service.ts
+├── views/
+│   └── execute-view.ts
+├── components/
+│   ├── chat-panel.ts
+│   └── message-list.ts
+└── elements/
+    ├── message-bubble.ts
+    └── prompt-input.ts
+```
+
+**File:** `web/app/client/execution/interfaces.ts`
+```typescript
+import type { Signal } from '@lit-labs/signals';
+import type { AgentConfig } from '../config/types';
+
+export interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ExecutionService {
+  messages: Signal<Message[]>;
+  streaming: Signal<boolean>;
+  error: Signal<string | null>;
+  currentResponse: Signal<string>;
+
+  chat(config: AgentConfig, prompt: string): Promise<void>;
+  vision(config: AgentConfig, prompt: string, images: File[]): Promise<void>;
+  clear(): void;
+}
+```
+
+### Phase 5: View Components
+
+**Component Hierarchy Example:**
+
+```
+gl-execute-view (provides: configService, executionService)
+├── gl-config-selector (consumes: configService)
+│   └── gl-config-card (stateless)
+├── gl-chat-panel (consumes: executionService)
+│   ├── gl-message-list (consumes: executionService)
+│   │   └── gl-message-bubble (stateless)
+│   └── gl-prompt-input (stateless)
+```
+
+**File:** `web/app/client/views/home-view.ts`
+```typescript
+import { LitElement, html, css } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+@customElement('gl-home-view')
+export class HomeView extends LitElement {
+  static styles = css`
+    :host { display: block; padding: var(--space-6); }
+    h1 { margin-bottom: var(--space-4); }
+  `;
+
+  render() {
+    return html`
+      <h1>Go-Lit</h1>
+      <p>A Go + Lit architecture proof of concept.</p>
+      <nav>
+        <a href="config">Manage Configurations</a>
+        <a href="execute">Execute</a>
+      </nav>
+    `;
+  }
+}
+```
+
+### Phase 6: App Entry Point Update
+
+**File:** `web/app/client/app.ts`
+```typescript
+import './design/styles.css';
+
+// Router
+import { Router } from './router/router';
+
+// Views (router targets)
+import './views/home-view';
+import './config/views/config-list-view';
+import './config/views/config-edit-view';
+import './execution/views/execute-view';
+
+// Initialize router
+const router = new Router('app-content');
+router.start();
+```
+
+### Phase 7: Update app.go for Client Routing
+
+Change from single `/{$}` route to catch-all `/{path...}` so the client router handles all `/app/*` paths:
+
+**File:** `web/app/app.go` (updated)
+```go
+var views = []web.ViewDef{
+    {Route: "/{path...}", Template: "shell.html", Title: "Go Lit", Bundle: "app"},
+}
+```
+
+Rename `home.html` to `shell.html` (or create new) - this becomes a minimal shell since client router handles content:
+```html
+{{ define "content" }}
+<!-- Client router mounts components here -->
+{{ end }}
+```
+
+---
+
+## Component Patterns Reference
+
+### View Component (provides services)
+```typescript
+@customElement('gl-config-list-view')
+export class ConfigListView extends SignalWatcher(LitElement) {
+  @provide({ context: configServiceContext })
+  private configService: ConfigService = createConfigService();
 
   connectedCallback() {
     super.connectedCallback();
-    this.agentService.list();
+    this.configService.list();
+  }
+
+  render() {
+    return html`<gl-config-list></gl-config-list>`;
   }
 }
 ```
 
-**Stateful Component** - Consume services, handle events:
+### Stateful Component (consumes services)
 ```typescript
-@customElement('al-agent-list')
-export class AgentList extends SignalWatcher(LitElement) {
-  @consume({ context: agentServiceContext })
-  private agentService!: AgentService;
+@customElement('gl-config-list')
+export class ConfigList extends SignalWatcher(LitElement) {
+  @consume({ context: configServiceContext })
+  private configService!: ConfigService;
 
   private handleDelete(e: CustomEvent<{ id: string }>) {
-    this.agentService.delete(e.detail.id);
+    this.configService.delete(e.detail.id);
+  }
+
+  render() {
+    return html`
+      ${this.configService.configs.value.map(config => html`
+        <gl-config-card
+          .config=${config}
+          @delete=${this.handleDelete}
+        ></gl-config-card>
+      `)}
+    `;
   }
 }
 ```
 
-**Stateless Element** - Pure attribute/event component:
+### Stateless Element (pure)
 ```typescript
-@customElement('al-agent-card')
-export class AgentCard extends LitElement {
-  @property({ type: Object }) agent!: Agent;
-  // Emits events, no service awareness
+@customElement('gl-config-card')
+export class ConfigCard extends LitElement {
+  @property({ type: Object }) config!: AgentConfig;
+
+  private handleDelete() {
+    this.dispatchEvent(new CustomEvent('delete', {
+      detail: { id: this.config.id },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
+  render() {
+    return html`
+      <div class="card">
+        <h3>${this.config.name}</h3>
+        <p>${this.config.provider.name} / ${this.config.model.name}</p>
+        <button @click=${this.handleDelete}>Delete</button>
+      </div>
+    `;
+  }
 }
 ```
 
-### Service Architecture
-
-**Interface-Based Contracts:**
-```typescript
-export interface AgentService {
-  agents: Signal<Agent[]>;
-  loading: Signal<boolean>;
-  error: Signal<string | null>;
-
-  list(params?: PageRequest): Promise<Result<PageResult<Agent>>>;
-  find(id: string): Promise<Result<Agent>>;
-  create(cmd: AgentCommand): Promise<Result<Agent>>;
-  update(id: string, cmd: AgentCommand): Promise<Result<Agent>>;
-  delete(id: string): Promise<Result<void>>;
-}
-```
-
-**Factory Functions:**
-```typescript
-export function createAgentService(): AgentService {
-  const agents = signal<Agent[]>([]);
-  const loading = signal(false);
-  const error = signal<string | null>(null);
-  // ... implementation
-}
-```
+---
 
 ## Development Workflow
-
-Since assets are embedded via `//go:embed`, the client must be built before the Go server can serve them.
 
 ```bash
 # Build client assets
@@ -233,72 +565,52 @@ cd web && bun run build
 # Run server (serves embedded assets)
 go run ./cmd/server
 
-# Access app at http://localhost:8080/app/
-# Access API docs at http://localhost:8080/scalar
-# Make changes → rebuild → refresh browser
+# Access points:
+# - http://localhost:8080/app/     - Web application
+# - http://localhost:8080/scalar/  - API documentation
+# - http://localhost:8080/healthz  - Health check
 ```
 
-## Production Build
-
-```bash
-# Build all clients (app + scalar)
-cd web && bun run build
-
-# Build server
-go build -o bin/server ./cmd/server
-
-# Run
-./bin/server
-```
+---
 
 ## Verification Checklist
 
-**Server:**
-- [ ] Go serves static shell for all `/app/*` routes (no view awareness)
-- [ ] Go serves JSON API at `/api/*`
-- [ ] Go serves OpenAPI spec at `/api/openapi.json`
-- [ ] Scalar UI accessible at `/scalar`
-- [ ] Agents seed from JSON file on startup
-- [ ] Template variables render correctly (BasePath, Title, Bundle)
+### Session 1 (Complete)
+- [x] `go vet ./...` passes
+- [x] `go run ./cmd/server` starts without errors
+- [x] `GET /healthz` returns OK
+- [x] `GET /app/` renders shell with CSS applied
+- [x] `GET /scalar/` renders API documentation
+- [x] `POST /api/chat` streams SSE response
+- [x] `cd web && bun run build` generates dist assets
 
-**Multi-Client Build:**
-- [ ] `bun run build` in `web/` builds both app and scalar
-- [ ] Assets output to correct locations (`app/dist/`, `scalar/`)
-- [ ] Aliases resolve correctly (@app/design, @app/shared, etc.)
-
-**Router:**
+### Session 2
 - [ ] Router mounts correct component based on path
 - [ ] Route params passed as attributes
 - [ ] Browser back/forward works (popstate)
-- [ ] Internal link clicks intercepted (no full page reload)
-
-**Component Hierarchy:**
+- [ ] Internal links navigate without page reload
+- [ ] ConfigService persists to localStorage
+- [ ] ExecutionService consumes SSE stream
 - [ ] View components provide services via `@provide()`
-- [ ] Stateful components consume services via `@consume()`
+- [ ] Stateful components consume via `@consume()`
 - [ ] Stateless elements are pure (attributes in, events out)
-- [ ] Events bubble to stateful boundary and stop
+- [ ] Chat execution works end-to-end
+- [ ] Vision execution works with image upload
 
-**State Management:**
-- [ ] Signals trigger reactive updates via `SignalWatcher`
-- [ ] Service signals shared across consuming components
-
-**Functionality:**
-- [ ] Agent CRUD operations work (list, create, update, delete)
-- [ ] Chat execution works (request → response)
-- [ ] Chat streaming works via SSE
+---
 
 ## Source Material
 
-Extracted and adapted from [agent-lab](https://github.com/JaimeStill/agent-lab):
-- `pkg/handlers/`, `pkg/middleware/`, `pkg/module/`, `pkg/openapi/`, `pkg/pagination/`, `pkg/routes/`
-- `pkg/web/` - ViewDef, ViewData, TemplateSet
-- `internal/agents/` - agent.go, errors.go, handler.go, requests.go, openapi.go
-- `web/scalar/` - Scalar module
-- `web/vite.client.ts` - Multi-client vite configuration
+- [go-lit-architecture.md](https://github.com/JaimeStill/agent-lab/blob/main/_context/concepts/go-lit-architecture.md) - Architecture specification
+- [agent-lab](https://github.com/JaimeStill/agent-lab) - pkg/, web/ infrastructure
+- [go-agents](https://github.com/JaimeStill/go-agents) - AgentConfig structure, execution patterns
+
+---
 
 ## Post-POC
 
 Once validated, the patterns established here will inform:
+
 - `.claude/skills/web-development/SKILL.md` updates in agent-lab
 - `web/app/client/` restructure following domain organization
 - Milestone 5 rebuild from the emergent architectural foundation
