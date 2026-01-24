@@ -18,7 +18,7 @@
       "@app/*": [
         "./app/client/*"
       ]
-    }
+    },
   },
   "include": [
     "app/client/**/*",

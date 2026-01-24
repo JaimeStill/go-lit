@@ -1,0 +1,24 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: block;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: var(--space-4);
+  color: var(--red);
+}
+
+.path {
+  font-family: var(--font-mono);
+  background: var(--bg-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 0.25rem;
+}
+
+p {
+  margin-bottom: var(--space-6);
+  color: var(--color-1);
+}

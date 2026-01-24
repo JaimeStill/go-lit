@@ -1,0 +1,120 @@
+/*
+ * Base styles for Shadow DOM components.
+ * Import in component CSS: @import '@app/design/components/elements.css';
+ *
+ * Contains:
+ * - Reset fundamentals (box-sizing, margin)
+ * - Commonly-used element styles (buttons, forms)
+ * - Reusable utility classes
+ *
+ * All colors use design tokens for theme support.
+ */
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+/* Buttons */
+button {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  background: var(--bg-2);
+  color: var(--color);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button variants */
+.btn-primary {
+  background: var(--blue);
+  color: var(--bg);
+}
+
+.btn-secondary {
+  background: var(--bg-2);
+  color: var(--color);
+}
+
+.btn-success {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.btn-info {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+/* Form elements */
+input,
+textarea,
+select {
+  padding: var(--space-2);
+  border: 1px solid var(--divider);
+  border-radius: 0.25rem;
+  background: var(--bg-1);
+  color: var(--color);
+  font-family: inherit;
+  font-size: var(--text-base);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+fieldset {
+  border: 1px solid var(--divider);
+  border-radius: 0.5rem;
+  padding: var(--space-4);
+}
+
+legend {
+  padding: 0 var(--space-2);
+  font-weight: 600;
+}
+
+label {
+  font-size: var(--text-sm);
+  color: var(--color-1);
+}
+
+/* Links styled as buttons */
+.link-btn {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 0.25rem;
+  text-decoration: none;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: none;
+}

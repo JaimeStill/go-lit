@@ -1,0 +1,13 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: block;
+  padding: var(--space-6);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}

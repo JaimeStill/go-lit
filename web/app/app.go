@@ -31,7 +31,7 @@ var publicFiles = []string{
 }
 
 var views = []web.ViewDef{
-	{Route: "/{$}", Template: "home.html", Title: "Home", Bundle: "app"},
+	{Route: "/{path...}", Template: "shell.html", Title: "Go + Lit", Bundle: "app"},
 }
 
 // NewModule creates the app module configured for the given base path.
