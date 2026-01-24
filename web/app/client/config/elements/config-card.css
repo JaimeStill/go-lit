@@ -1,0 +1,28 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: block;
+  background: var(--bg-1);
+  border: 1px solid var(--divider);
+  border-radius: 0.5rem;
+  padding: var(--space-4);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-2);
+}
+
+.meta {
+  color: var(--color-2);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}

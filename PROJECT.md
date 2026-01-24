@@ -24,14 +24,22 @@ Validate the Go + Lit web application architecture defined in [go-lit-architectu
 - [x] Design system CSS layers
 - [x] Minimal app.ts entry point (CSS import only)
 
-### Session 2: Client Application
+### Session 2: Client Application ✓
 
-- [ ] Router implementation (static mapping, param extraction, history API)
-- [ ] Shared infrastructure (api.ts, types.ts)
-- [ ] Config domain (localStorage-based config management)
-- [ ] Execution domain (chat/vision streaming via SSE)
-- [ ] View components (home, config-list, config-edit, execute)
-- [ ] Update app.go to catch-all route for client routing
+- [x] Router implementation (static mapping, param extraction, history API)
+- [x] Shared infrastructure (api.ts, types.ts, json-editor element)
+- [x] Config domain (localStorage-based config management)
+- [x] Execution domain (chat streaming via SSE)
+- [x] View components (home, config-list, config-edit, execute)
+- [x] Update app.go to catch-all route for client routing
+
+### Session 3: Polish & Completion
+
+- [ ] App header with navigation (home link, config, execute)
+- [ ] Config selector auto-selection from route param
+- [ ] Vision execution support (image upload, vision API)
+- [ ] Config card grid layout (consistent sizing regardless of content)
+- [ ] Final layout/styling review
 
 ---
 
@@ -584,18 +592,25 @@ go run ./cmd/server
 - [x] `POST /api/chat` streams SSE response
 - [x] `cd web && bun run build` generates dist assets
 
-### Session 2
-- [ ] Router mounts correct component based on path
-- [ ] Route params passed as attributes
-- [ ] Browser back/forward works (popstate)
-- [ ] Internal links navigate without page reload
-- [ ] ConfigService persists to localStorage
-- [ ] ExecutionService consumes SSE stream
-- [ ] View components provide services via `@provide()`
-- [ ] Stateful components consume via `@consume()`
-- [ ] Stateless elements are pure (attributes in, events out)
-- [ ] Chat execution works end-to-end
-- [ ] Vision execution works with image upload
+### Session 2 (Complete)
+- [x] Router mounts correct component based on path
+- [x] Route params passed as attributes
+- [x] Browser back/forward works (popstate)
+- [x] Internal links navigate without page reload
+- [x] ConfigService persists to localStorage
+- [x] ExecutionService consumes SSE stream
+- [x] View components provide services via `@provide()`
+- [x] Stateful components consume via `@consume()`
+- [x] Stateless elements are pure (attributes in, events out)
+- [x] Chat execution works end-to-end
+- [ ] Vision execution works with image upload (Session 3)
+
+### Session 3
+- [ ] App header renders on all routes
+- [ ] Navigation links work from header
+- [ ] Config selector reflects route param selection
+- [ ] Vision execution with image upload
+- [ ] Config cards have consistent grid sizing
 
 ---
 
@@ -614,3 +629,157 @@ Once validated, the patterns established here will inform:
 - `.claude/skills/web-development/SKILL.md` updates in agent-lab
 - `web/app/client/` restructure following domain organization
 - Milestone 5 rebuild from the emergent architectural foundation
+
+### Web Development Standardization
+
+Patterns to codify in agent-lab web development skill:
+
+- **Single base Vite alias**: `@app` → `client/` (zero maintenance vs wildcard patterns)
+- **External component styles**: Co-located `.css` files with `?inline` imports + `unsafeCSS()` (see `_context/future/native-css-imports.md` for migration path)
+- **Design infrastructure separation**: `design/global/` for document-level styles, `design/components/` for Shadow DOM styles; tokens isolated in `tokens.css` for single source of truth
+- **Shadow DOM base styles**: Components `@import '@app/design/components/elements.css'` for reset fundamentals and commonly-used element/utility styles; all colors use tokens (never hardcoded values)
+- **Consolidated service infrastructure**: Single `service.ts` per domain exports context, interface, and factory
+- **DRY handlers**: Extract repeated callback patterns into reusable named functions
+- **Template render methods**: Extract complex conditionals and interpolations into private `renderXxx()` methods
+- **Flexible height layouts**: Use CSS grid `minmax(0, 1fr)` with `min-height: 0` on flex children for content that should fill available space
+- **HTMLElement property avoidance**: Use `configId` instead of `id`, `heading` instead of `title` to avoid conflicts with HTMLElement base properties
+
+### Template Render Methods Convention
+
+Use private `renderXxx()` methods to encapsulate complex template logic:
+
+```typescript
+import { LitElement, html, nothing } from 'lit';
+
+@customElement('gl-example')
+export class Example extends LitElement {
+  // Use for conditional rendering
+  private renderError() {
+    const error = this.service.error.get();
+    if (!error) return nothing;  // Lit sentinel for "render nothing"
+
+    return html`<div class="error">${error}</div>`;
+  }
+
+  // Use for complex interpolations
+  private renderSummary() {
+    const text = this.data.summary;
+    if (!text) return nothing;
+
+    const display = text.length > 100 ? `${text.slice(0, 100)}...` : text;
+    return html`<p class="summary">${display}</p>`;
+  }
+
+  // Use for conditional component variations
+  private renderButton() {
+    if (this.streaming) {
+      return html`<button class="btn-danger" @click=${this.handleCancel}>Cancel</button>`;
+    }
+    return html`<button class="btn-primary" @click=${this.handleSubmit}>Send</button>`;
+  }
+
+  render() {
+    return html`
+      ${this.renderError()}
+      ${this.renderSummary()}
+      ${this.renderButton()}
+    `;
+  }
+}
+```
+
+**When to use:**
+- Conditional rendering (empty states, error banners, loading indicators)
+- Complex string interpolations (truncation, formatting)
+- Mutually exclusive template branches (send/cancel buttons)
+- Collection mapping (lists, grids of items)
+- Any logic that obscures the main template structure
+
+**Collection rendering pattern:**
+```typescript
+private renderConfigs(configs: AgentConfig[]) {
+  return configs.map(
+    (config) => html`
+      <gl-config-card
+        .config=${config}
+        @edit=${this.handleEdit}
+      ></gl-config-card>
+    `
+  );
+}
+
+render() {
+  const configs = this.configService.configs.get();
+  return html`<div class="grid">${this.renderConfigs(configs)}</div>`;
+}
+```
+
+Parameterizing with the collection makes dependencies explicit and keeps the method focused on rendering.
+
+**Conventions:**
+- Name methods `renderXxx()` where `Xxx` describes the content
+- Return `nothing` (from `lit`) for conditional non-rendering, not `null`
+- Keep methods focused on a single template concern
+- Methods should be private (implementation detail)
+- For collections, pass data as parameter rather than accessing state directly
+
+### Form Handling Convention
+
+Extract form values on submit using FormData rather than tracking every field change in component state:
+
+```typescript
+function buildConfigFromForm(form: HTMLFormElement, id: string): AgentConfig {
+  const data = new FormData(form);
+
+  return {
+    id,
+    name: data.get('name') as string,
+    system_prompt: (data.get('system_prompt') as string) || undefined,
+    provider: {
+      name: data.get('provider_name') as string,
+      base_url: data.get('base_url') as string,
+    },
+    // ...
+  };
+}
+
+@customElement('gl-config-form')
+export class ConfigForm extends LitElement {
+  @property({ type: String }) configId?: string;
+
+  private get config(): AgentConfig {
+    if (this.configId) {
+      const existing = this.configService.find(this.configId);
+      if (existing) return existing;
+    }
+    return createDefaultConfig();  // Centralized defaults
+  }
+
+  private handleSubmit(e: Event) {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const config = buildConfigFromForm(form, this.config.id);
+    this.configService.save(config);
+    navigate('config');
+  }
+
+  render() {
+    const { config } = this;
+
+    return html`
+      <form @submit=${this.handleSubmit}>
+        <input name="name" .value=${config.name} required />
+        <!-- ... -->
+      </form>
+    `;
+  }
+}
+```
+
+**Key principles:**
+- Use `name` attributes on form inputs for FormData extraction
+- Centralize defaults in a `createDefaultXxx()` function; getter returns existing or default
+- Use `.value=${config.field}` to populate values (no null coalescing in templates)
+- Encapsulate object construction in a standalone `buildXxxFromForm()` function
+- Validation happens server-side; errors returned in response inform the UI
+- Avoid tracking individual field state unless async validation is required (and prefer server-side validation even then)

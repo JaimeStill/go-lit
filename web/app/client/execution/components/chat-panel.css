@@ -1,0 +1,33 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+gl-message-list {
+  flex: 1;
+  padding: var(--space-4);
+  min-height: 0;
+}
+
+.input-bar {
+  padding: var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.error {
+  padding: var(--space-2) var(--space-4);
+  background: var(--red-bg);
+  color: var(--red);
+  font-size: var(--text-sm);
+}
+
+.no-config {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-2);
+}

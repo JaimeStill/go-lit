@@ -1,0 +1,59 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+h1 {
+  grid-column: 1 / -1;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.config-select {
+  flex-shrink: 0;
+}
+
+.config-edit {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--divider);
+  border-radius: 0.5rem;
+  padding: var(--space-4);
+}
+
+.config-edit gl-config-editor {
+  flex: 1;
+  min-height: 0;
+}
+
+gl-chat-panel {
+  border: 1px solid var(--divider);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  :host {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .sidebar {
+    max-height: 300px;
+  }
+}

@@ -1,0 +1,24 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: block;
+}
+
+form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+textarea {
+  flex: 1;
+  padding: var(--space-3);
+  border-radius: 0.5rem;
+  resize: none;
+  min-height: 2.5rem;
+  max-height: 150px;
+}
+
+button {
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0.5rem;
+}

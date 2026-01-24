@@ -1,0 +1,31 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: block;
+}
+
+.bubble {
+  max-width: 80%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.user {
+  background: var(--blue-bg);
+  color: var(--color);
+  margin-left: auto;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.assistant {
+  background: var(--bg-2);
+  color: var(--color);
+  margin-right: auto;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.streaming {
+  border: 1px solid var(--blue);
+}

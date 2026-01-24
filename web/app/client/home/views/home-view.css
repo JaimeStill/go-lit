@@ -1,0 +1,26 @@
+@import '@app/design/components/elements.css';
+
+:host {
+  display: block;
+  padding: var(--space-6);
+}
+
+h1 {
+  margin-bottom: var(--space-4);
+}
+
+.description {
+  color: var(--color-1);
+  margin-bottom: var(--space-6);
+  max-width: 600px;
+}
+
+nav {
+  display: flex;
+  gap: var(--space-4);
+}
+
+nav a {
+  padding: var(--space-3) var(--space-6);
+  border-radius: 0.5rem;
+}
