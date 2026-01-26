@@ -1,13 +1,22 @@
-@import '@app/design/components/elements.css';
+@import '@app/design/app/elements.css';
 
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   padding: var(--space-6);
+  overflow: hidden;
 }
 
 .header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-6);
+}
+
+gl-config-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }

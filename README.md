@@ -58,13 +58,17 @@ cd .. && go run ./cmd/server
 
 ## Project Status
 
-This is a proof-of-concept.
+This proof-of-concept is **complete**.
 
-**Session 1 (Complete)**: Go server infrastructure, API endpoints (chat/vision streaming), Scalar documentation, web build tooling, and minimal shell template.
+**Session 1**: Go server infrastructure, API endpoints (chat/vision streaming), Scalar documentation, web build tooling, and shell template.
 
-**Session 2 (Pending)**: Client-side router, shared infrastructure, config domain (localStorage), execution domain (SSE streaming), and Lit view components.
+**Session 2**: Client-side router, shared infrastructure, config domain (localStorage), execution domain (SSE streaming), and Lit view components.
 
-See [PROJECT.md](PROJECT.md) for detailed implementation roadmap.
+**Session 3**: App header navigation, config selector auto-selection, vision execution with image upload, responsive layout polish, and auto-scroll chat.
+
+**Note**: Hot reload capability for development still needs to be established before retrofitting agent-lab.
+
+See [PROJECT.md](PROJECT.md) for detailed implementation and architectural patterns.
 
 ## Related Projects
 

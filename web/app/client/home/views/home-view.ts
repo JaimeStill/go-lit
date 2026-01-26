@@ -13,10 +13,6 @@ export class HomeView extends LitElement {
         A Go + Lit architecture proof of concept demonstrating clean separation 
         between server (data/routing) and client (presentation/state/management).
       </p>
-      <nav>
-        <a href="config" class="link-btn btn-primary">Manage Configurations</a>
-        <a href="execute" class="link-btn btn-secondary">Execute Chat</a>
-      </nav>
     `;
   }
 }

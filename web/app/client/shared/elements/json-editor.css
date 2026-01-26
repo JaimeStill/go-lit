@@ -1,4 +1,4 @@
-@import '@app/design/components/elements.css';
+@import '@app/design/app/elements.css';
 
 :host {
   display: flex;

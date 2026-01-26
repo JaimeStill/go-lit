@@ -33,13 +33,15 @@ Validate the Go + Lit web application architecture defined in [go-lit-architectu
 - [x] View components (home, config-list, config-edit, execute)
 - [x] Update app.go to catch-all route for client routing
 
-### Session 3: Polish & Completion
+### Session 3: Polish & Completion ✓
 
-- [ ] App header with navigation (home link, config, execute)
-- [ ] Config selector auto-selection from route param
-- [ ] Vision execution support (image upload, vision API)
-- [ ] Config card grid layout (consistent sizing regardless of content)
-- [ ] Final layout/styling review
+- [x] App header with navigation (persistent across routes)
+- [x] Config selector auto-selection from route param
+- [x] Vision execution support (image upload with object URL lifecycle management)
+- [x] Config card grid layout (consistent sizing, space-between actions)
+- [x] Responsive expand/collapse for config editor
+- [x] Auto-scroll chat during streaming
+- [x] Final layout/styling review
 
 ---
 
@@ -603,14 +605,18 @@ go run ./cmd/server
 - [x] Stateful components consume via `@consume()`
 - [x] Stateless elements are pure (attributes in, events out)
 - [x] Chat execution works end-to-end
-- [ ] Vision execution works with image upload (Session 3)
+- [x] Vision execution works with image upload
 
-### Session 3
-- [ ] App header renders on all routes
-- [ ] Navigation links work from header
-- [ ] Config selector reflects route param selection
-- [ ] Vision execution with image upload
-- [ ] Config cards have consistent grid sizing
+### Session 3 (Complete)
+- [x] App header renders on all routes
+- [x] Navigation links work from header
+- [x] Config selector reflects route param selection
+- [x] Vision execution with image upload
+- [x] Config cards have consistent grid sizing
+- [x] Config editor actions above editor
+- [x] JSON editor fills available space
+- [x] Responsive expand/collapse for config editor
+- [x] Chat auto-scrolls during streaming
 
 ---
 
@@ -636,12 +642,12 @@ Patterns to codify in agent-lab web development skill:
 
 - **Single base Vite alias**: `@app` → `client/` (zero maintenance vs wildcard patterns)
 - **External component styles**: Co-located `.css` files with `?inline` imports + `unsafeCSS()` (see `_context/future/native-css-imports.md` for migration path)
-- **Design infrastructure separation**: `design/global/` for document-level styles, `design/components/` for Shadow DOM styles; tokens isolated in `tokens.css` for single source of truth
-- **Shadow DOM base styles**: Components `@import '@app/design/components/elements.css'` for reset fundamentals and commonly-used element/utility styles; all colors use tokens (never hardcoded values)
+- **Design directory structure**: `design/core/` for foundational system (tokens, reset, theme, layout utilities), `design/app/` for application-specific infrastructure (shell styles, Shadow DOM element styles), `design/index.css` as entry point
+- **Shadow DOM base styles**: Components `@import '@app/design/app/elements.css'` for reset fundamentals and commonly-used element/utility styles; all colors use tokens (never hardcoded values)
 - **Consolidated service infrastructure**: Single `service.ts` per domain exports context, interface, and factory
 - **DRY handlers**: Extract repeated callback patterns into reusable named functions
 - **Template render methods**: Extract complex conditionals and interpolations into private `renderXxx()` methods
-- **Flexible height layouts**: Use CSS grid `minmax(0, 1fr)` with `min-height: 0` on flex children for content that should fill available space
+- **App-shell scroll architecture**: See dedicated section below for viewport and scroll management
 - **HTMLElement property avoidance**: Use `configId` instead of `id`, `heading` instead of `title` to avoid conflicts with HTMLElement base properties
 
 ### Template Render Methods Convention
@@ -783,3 +789,192 @@ export class ConfigForm extends LitElement {
 - Encapsulate object construction in a standalone `buildXxxFromForm()` function
 - Validation happens server-side; errors returned in response inform the UI
 - Avoid tracking individual field state unless async validation is required (and prefer server-side validation even then)
+
+### App-Shell Scroll Architecture
+
+Use the app-shell model for viewport and scroll management. The body fills exactly the viewport and never scrolls; views manage their own internal scroll regions.
+
+**Core CSS setup** (`design/app/app.css`):
+
+```css
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;      /* fixed viewport, not min-height */
+  margin: 0;
+  overflow: hidden;    /* body never scrolls */
+}
+
+.app-header {
+  flex-shrink: 0;      /* header won't compress */
+}
+
+#app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;       /* allow shrinking below content size */
+  overflow: hidden;    /* views manage their own scroll */
+}
+
+#app-content > * {
+  flex: 1;
+  min-height: 0;
+}
+```
+
+**Key principles:**
+
+| Pattern | Purpose |
+|---------|---------|
+| `height: 100dvh` | Fixed viewport (dvh adjusts for mobile browser UI) |
+| `overflow: hidden` | Prevents scroll at this level, delegates to children |
+| `flex: 1` | Fill available space in flex container |
+| `min-height: 0` | Allow flex children to shrink below content size |
+| `overflow-y: auto` | Create scroll region (only on leaf containers) |
+
+**Avoid `height: 100%`** in flex/grid contexts. Percentage heights require explicit parent height, which flex/grid don't provide. Use `flex: 1` instead.
+
+**Height chain for scroll boundaries:**
+```
+body (height: 100dvh, overflow: hidden)
+└── #app-content (flex: 1, min-height: 0, overflow: hidden)
+    └── view (flex: 1, min-height: 0)
+        └── scrollable-region (overflow-y: auto)
+```
+
+Every ancestor in the chain needs constrained height for `overflow-y: auto` to create a scroll boundary.
+
+**View CSS pattern:**
+```css
+:host {
+  display: flex;
+  flex-direction: column;
+  /* no height needed - parent handles sizing */
+}
+
+.scrollable-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fixed-footer {
+  flex-shrink: 0;
+}
+```
+
+**Grid layout with scroll regions:**
+```css
+:host {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  grid-template-rows: auto 1fr;
+  /* no height needed */
+}
+
+.panel-with-scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+```
+
+### Host Attribute Reflection for CSS State
+
+When component state needs to affect parent-level CSS (e.g., grid layout changes), reflect the state as a host attribute:
+
+```typescript
+@state() private expanded = false;
+
+updated(changed: Map<string, unknown>) {
+  if (changed.has('expanded')) {
+    this.toggleAttribute('expanded', this.expanded);
+  }
+}
+```
+
+```css
+:host {
+  grid-template-rows: auto auto 1fr;
+}
+
+:host([expanded]) {
+  grid-template-rows: auto 1fr 1fr;
+}
+```
+
+This pattern enables CSS-driven layout changes based on component state without JavaScript style manipulation.
+
+### Explicit Grid Placement for Conditional Rendering
+
+When grid children are conditionally rendered, explicitly place elements that must stay in specific rows:
+
+```css
+/* Grid: help | actions | validation? | editor */
+:host {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
+/* Editor must always use row 4, even when validation isn't rendered */
+gl-json-editor {
+  grid-row: 4;
+}
+```
+
+Without explicit placement, conditionally-rendered elements cause subsequent siblings to shift into wrong grid tracks.
+
+### Object URL Lifecycle Management
+
+When using `URL.createObjectURL()` for file previews, manage the lifecycle to prevent memory leaks:
+
+```typescript
+private imageUrls = new Map<File, string>();
+
+disconnectedCallback() {
+  super.disconnectedCallback();
+  this.revokeAllUrls();
+}
+
+private getImageUrl(file: File): string {
+  let url = this.imageUrls.get(file);
+  if (!url) {
+    url = URL.createObjectURL(file);
+    this.imageUrls.set(file, url);
+  }
+  return url;
+}
+
+private revokeImageUrl(file: File) {
+  const url = this.imageUrls.get(file);
+  if (url) {
+    URL.revokeObjectURL(url);
+    this.imageUrls.delete(file);
+  }
+}
+
+private revokeAllUrls() {
+  this.imageUrls.forEach((url) => URL.revokeObjectURL(url));
+  this.imageUrls.clear();
+}
+```
+
+### Auto-Scroll During Streaming
+
+For chat interfaces with streaming content, auto-scroll to keep latest content visible:
+
+```typescript
+updated() {
+  if (this.streaming) {
+    this.scrollToBottom();
+  }
+}
+
+private scrollToBottom() {
+  this.scrollTop = this.scrollHeight;
+}
+```
+
+When the component's `:host` is the scroll container (`overflow-y: auto`), use `this.scrollTop` directly on the LitElement.

@@ -34,6 +34,7 @@ export class ExecuteView extends SignalWatcher(LitElement) {
 
   @state() private selectedId?: string;
   @state() private activeConfig?: AgentConfig;
+  @state() private editorExpanded = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -42,6 +43,12 @@ export class ExecuteView extends SignalWatcher(LitElement) {
     // Initialize selected config from route param
     if (this.configId) {
       this.selectedId = this.configId;
+    }
+  }
+
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('editorExpanded')) {
+      this.toggleAttribute('editor-expanded', this.editorExpanded);
     }
   }
 
@@ -69,6 +76,10 @@ export class ExecuteView extends SignalWatcher(LitElement) {
     `;
   }
 
+  private toggleEditor() {
+    this.editorExpanded = !this.editorExpanded;
+  }
+
   render() {
     return html`
       <h1>Execute</h1>
@@ -79,8 +90,15 @@ export class ExecuteView extends SignalWatcher(LitElement) {
             .selectedId=${this.selectedId}
             @config-select=${this.handleConfigSelect}
           ></gl-config-selector>
+          <button
+            class="expand-toggle btn-secondary"
+            @click=${this.toggleEditor}
+            ?hidden=${!this.selectedId}
+          >
+            ${this.editorExpanded ? 'Hide Editor' : 'Show Editor'}
+          </button>
         </div>
-        <div class="config-edit">
+        <div class="config-edit ${this.editorExpanded ? 'expanded' : ''}">
           ${this.renderConfigEditor()}
         </div>
       </div>

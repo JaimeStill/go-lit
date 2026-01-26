@@ -35,6 +35,16 @@ export class MessageList extends SignalWatcher(LitElement) {
     return html`<div class="streaming-bubble">${current}</div>`
   }
 
+  private scrollToBottom() {
+    this.scrollTop = this.scrollHeight;
+  }
+
+  updated() {
+    if (this.executionService.streaming.get()) {
+      this.scrollToBottom();
+    }
+  }
+
   render() {
     const messages = this.executionService.messages.get();
     const streaming = this.executionService.streaming.get();

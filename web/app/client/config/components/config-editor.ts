@@ -60,14 +60,6 @@ export class ConfigEditor extends SignalWatcher(LitElement) {
         for schema reference.
       </p>
 
-      <gl-json-editor
-        .value=${this.jsonText}
-        placeholder="Enter agent configuration JSON..."
-        @json-change=${this.handleJsonChange}
-      ></gl-json-editor>
-
-      ${this.renderValidationError()}
-
       <div class="actions">
         <button
           class="btn-primary"
@@ -79,6 +71,15 @@ export class ConfigEditor extends SignalWatcher(LitElement) {
         ${this.renderSaveAsButton()}
         ${this.renderCancelButton()}
       </div>
+
+      ${this.renderValidationError()}
+
+      <gl-json-editor
+        .value=${this.jsonText}
+        placeholder="Enter agent configuration JSON..."
+        @json-change=${this.handleJsonChange}
+      ></gl-json-editor>
+
     `;
   }
 

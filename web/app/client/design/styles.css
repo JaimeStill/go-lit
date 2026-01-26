@@ -1,6 +1,0 @@
-@layer tokens, reset, theme, layout;
-
-@import url(./global/tokens.css);
-@import url(./global/reset.css);
-@import url(./global/theme.css);
-@import url(./global/layout.css);

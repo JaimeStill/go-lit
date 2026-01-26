@@ -1,6 +1,6 @@
 /*
  * Base styles for Shadow DOM components.
- * Import in component CSS: @import '@app/design/components/elements.css';
+ * Import in component CSS: @import '@app/design/app/elements.css';
  *
  * Contains:
  * - Reset fundamentals (box-sizing, margin)

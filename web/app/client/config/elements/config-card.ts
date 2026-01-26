@@ -33,11 +33,7 @@ export class ConfigCard extends LitElement {
     const prompt = this.config.system_prompt;
     if (!prompt) return nothing;
 
-    const display = prompt.length > 100
-      ? `${prompt.slice(0, 100)}...`
-      : prompt;
-
-    return html`<p class="meta">${display}</p>`;
+    return html`<p class="system-prompt">${prompt}</p>`;
   }
 
   render() {
@@ -48,7 +44,9 @@ export class ConfigCard extends LitElement {
           ${this.renderMeta()}
         </div>
       </div>
-      ${this.renderSystemPrompt()}
+      <div class="content">
+        ${this.renderSystemPrompt()}
+      </div>
       <div class="actions">
         <button class="btn-info" @click=${() => this.emit('edit')}>
           Edit

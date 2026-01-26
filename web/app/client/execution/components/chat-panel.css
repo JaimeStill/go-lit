@@ -1,9 +1,8 @@
-@import '@app/design/components/elements.css';
+@import '@app/design/app/elements.css';
 
 :host {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 gl-message-list {

@@ -21,13 +21,18 @@ export class ChatPanel extends SignalWatcher(LitElement) {
 
   @property({ type: Object }) config?: AgentConfig;
 
+  private handleCancel() {
+    this.executionService.cancel();
+  }
+
   private handleSubmit(e: CustomEvent<{ prompt: string }>) {
     if (!this.config) return;
     this.executionService.chat(this.config, e.detail.prompt);
   }
 
-  private handleCancel() {
-    this.executionService.cancel();
+  private handleVisionSubmit(e: CustomEvent<{ prompt: string, images: File[] }>) {
+    if (!this.config) return;
+    this.executionService.vision(this.config, e.detail.prompt, e.detail.images);
   }
 
   private renderError() {
@@ -45,6 +50,10 @@ export class ChatPanel extends SignalWatcher(LitElement) {
     `;
   }
 
+  private get supportsVision(): boolean {
+    return !!this.config?.model?.capabilities?.vision;
+  }
+
   render() {
     const streaming = this.executionService.streaming.get();
 
@@ -60,7 +69,9 @@ export class ChatPanel extends SignalWatcher(LitElement) {
       <div class="input-bar">
         <gl-prompt-input
           ?streaming=${streaming}
+          ?enableVision=${this.supportsVision}
           @submit-prompt=${this.handleSubmit}
+          @submit-vision=${this.handleVisionSubmit}
           @cancel-stream=${this.handleCancel}
         ></gl-prompt-input>
       </div>

@@ -28,7 +28,11 @@ export class ConfigSelector extends SignalWatcher(LitElement) {
 
   private renderConfigOptions(configs: AgentConfig[]) {
     return configs.map((c) => html`
-      <option value=${c.id}>${this.formatOption(c)}</option>
+      <option
+        value=${c.id}
+        ?selected=${c.id === this.selectedId}>
+        ${this.formatOption(c)}
+      </option>
     `)
   }
 
@@ -61,8 +65,8 @@ export class ConfigSelector extends SignalWatcher(LitElement) {
     }
 
     return html`
-      <select @change=${this.handleChange} .value=${this.selectedId ?? ''}>
-        <option value="">Select a configuration...</option>
+      <select @change=${this.handleChange}>
+        <option value="" ?selected=${!this.selectedId}>Select a configuration...</option>
         ${this.renderConfigOptions(configs)}
       </select>
     `;
